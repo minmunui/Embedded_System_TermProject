@@ -198,6 +198,65 @@ void USART2_Configure() {
   USART_ITConfig(USART2, USART_IT_RXNE , ENABLE);
 }
 
+uint16_t BUFFER_SIZE = 30;
+char buffer_input[30] = "\n";
+int buffer_cursor = 0;
+char E_M[] = "BUF OVER";
+
+void buffer_flush() {
+  char buffer_input[30] = "\n";
+  int buffer_cursor = 0;
+}
+
+void concate_input_string(char input_char) {
+  if ( buffer_cursor >= BUFFER_SIZE ) {
+    error_message( E_M );
+    buffer_flush();
+  }
+  else {
+    buffer_input[buffer_cursor];
+    buffer_cursor += 1;
+    buffer_input[buffer_cursor] = '\n';
+  }
+}
+
+char* TIM = "TIM";
+char* LED = "LED";
+char* BLI = "BLI";
+char* TIME_REQUEST_MESSAGE = "Please Input TIME Do You Want";
+
+// TODO : I'm implementing strcmp to filter command
+
+uint16_t strcmp(char* str1, char* str2) {
+  for ( int i = 0 ;  ; i ++ ) {
+    if ( str1[i] == str2[i] ) {
+      if ( str2[i] == '/n' && str1[i] == '/n' ) {
+        return 1;
+      }
+    }
+    else {
+      return 0;
+    }
+  }
+  
+}
+
+void proccess_command() {
+  
+}
+
+
+void print_message(char * message) {
+    LCD_ShowString(H_S, V_I * 7 + V_S, MSG_LUMIN, color[11], color[0]);
+}
+
+void bluetooth_message(char * message) {
+  if (message[0] = '\n') {}
+  else 
+    for ( int i = 0 ; message[i] != '/n' ; i ++ )
+      USART_SendData(USART2, usart1In);
+}
+
 char usart1In = 'a';
 
 void USART1_IRQHandler(void){
@@ -210,6 +269,8 @@ void USART1_IRQHandler(void){
 
 char usart2In = 'a';
 
+/*
+// ORIGINAL USART2 HANDLER
 void USART2_IRQHandler(void){
   if ( USART_GetITStatus(USART2, USART_IT_RXNE) != RESET ) {
     usart2In = USART_ReceiveData(USART2);
@@ -217,6 +278,30 @@ void USART2_IRQHandler(void){
     USART_ClearITPendingBit(USART2, USART_IT_RXNE);
   }
 }
+*/
+
+
+void USART2_IRQHandler(void){
+  if ( USART_GetITStatus(USART2, USART_IT_RXNE) != RESET ) {
+    usart2In = USART_ReceiveData(USART2);
+    if (usart2In == '.') {
+      process_command();
+    }
+    else {
+      concate_input_string(usart2In);
+    }
+//    USART_SendData(USART1, usart2In);
+    USART_ClearITPendingBit(USART2, USART_IT_RXNE);
+  }
+}
+
+// one sentance
+
+
+
+// two step
+
+
 
 int cnt = 0;
 uint16_t sub[2] = {1000, 2000};
@@ -246,7 +331,7 @@ void timeCheck(){
     GPIO_ResetBits(GPIOD, GPIO_Pin_11);
     time = 0;
   }
-  LCD_ShowNum(70, 0, time, 10, color[11], color[0]);
+  LCD_ShowNum(174, 42, time, 5, color[11], color[0]);
 }
 
 
@@ -268,14 +353,14 @@ void TIM2_IRQHandler() {
 }
 
 
-
-char MSG_TIME[] = "TIME : ";
-char MSG_LUMIN[] = "LUMI : ";
-char MSG_MODE[] = "MODE : ";
+char MSG_TITLE[] = "SMART BLINDER";
+char MSG_TIME[] = "TIME";
+char MSG_LUMIN[] = "LUMI";
+char MSG_MODE[] = "MODE";
 char MSG_AUTO[] = "AUTO  ";
 char MSG_MAN[] = "MANUAL";
-char MSG_LED[] = "LED : ";
-char MSG_BLIND[] = "BLD : ";
+char MSG_LED[] = "LED";
+char MSG_BLIND[] = "BLD";
 char MSG_ON[] = "ON ";
 char MSG_OFF[] = "OFF";
 
@@ -285,70 +370,85 @@ uint16_t auto_mode = 1;
 
 
 uint16_t V_I = 32; // Vertical Interval
-uint16_t H_I = 70; // Horizontal Interval
-
-void LCD_indicate(uint16_t input_time, uint16_t input_lumin, uint16_t is_blind, uint16_t is_led, uint16_t auto_mode) {
-
-  // TIME
-//  LCD_ShowString(0, 0, MSG_TIME, color[11], color[0]);
-//  LCD_ShowNum(H_I, 0, input_time, 10, color[11], color[0]);
-
-  // LUMIN
-  LCD_ShowString(0, V_I, MSG_LUMIN, color[11], color[0]);
-  LCD_ShowNum(H_I, V_I, input_lumin, 10, color[11], color[0]);
-
-  // MODE
-  LCD_ShowString(0, V_I * 2, MSG_MODE, color[11], color[0]);
-  if (auto_mode) {
-    LCD_ShowString(H_I, V_I * 2, MSG_AUTO, color[11], color[0]);
-  }
-  else {
-    LCD_ShowString(H_I, V_I * 2, MSG_MAN, color[11], color[0]);
-  }
-
-  // Blind
-  LCD_ShowString(0, V_I * 4, MSG_BLIND, color[11], color[0]);
-  if (blind_state == 1) {
-    LCD_ShowString(H_I, V_I * 4, MSG_ON, color[11], color[0]);
-  }
-  else {
-    LCD_ShowString(H_I, V_I * 4, MSG_OFF, color[11], color[0]);
-  }
-
-  // LED
-  LCD_ShowString(H_I * 2, V_I * 4, MSG_LED, color[11], color[0]);
-  if ( led_state == 1 ) {
-    LCD_ShowString(H_I * 3, V_I * 4, MSG_ON, color[11], color[0]);
-  }
-  else {
-    LCD_ShowString(H_I * 3, V_I * 4, MSG_OFF, color[11], color[0]);
-  }
-}
-
+uint16_t H_I = 60; // Horizontal Interval
+uint16_t V_S = 10; // Vertical Shift
+uint16_t H_S = 20; // Horizontal Shift
+uint16_t H_END = 1000;
 
 uint16_t TOUCH_WIDTH = 20;
 
+void LCD_indicate(uint16_t input_time, uint16_t input_lumin, uint16_t is_blind, uint16_t is_led, uint16_t auto_mode) {
+  
+  // TIME
+//  LCD_ShowString(0, 0, MSG_TIME, color[11], color[0]);
+
+  // LUMIN
+  LCD_ShowNum(174, V_I * 2 + 10, input_lumin, 5, color[11], color[0]);
+
+  // MODE
+  if (auto_mode == 1) {
+    LCD_ShowString(174, V_I * 3 + 10, MSG_AUTO, color[11], color[0]);
+  }
+  else {
+    LCD_ShowString(174 , V_I * 3 + 10, MSG_MAN, color[11], color[0]);
+  }
+
+  // Blind
+  if (blind_state == 1) {
+    LCD_ShowString(174 , V_I * 4 + 10, MSG_ON, color[11], color[0]);
+  }
+  else {
+    LCD_ShowString(174, V_I * 4 + 10, MSG_OFF, color[11], color[0]);
+  }
+
+  // LED
+  if ( led_state == 1 ) {
+    LCD_ShowString(174, V_I * 5 + 10, MSG_ON, color[11], color[0]);
+  }
+  else {
+    LCD_ShowString(174, V_I * 5 + 10, MSG_OFF, color[11], color[0]);
+  }  
+}
+
+
+
+void motor_delay() {
+  for ( int i = 0 ; i < 100000 ; i ++ ) {
+  }
+}
+
+// LED PIN = 11
+// ACTIVATE BLIND PIN = 12
+// REMOVE BLIIND PIN = 13
+// ALARM PIN = 14
+
+void activate_alarm() {
+    
+}
+
 void activate_blind() {
   blind_state = 1;
-  // TODO 블라인드 치다
+  // TODO 
+  GPIO_SetBits(GPIOD, GPIO_Pin_12);
+  GPIO_ResetBits(GPIOD, GPIO_Pin_12);
 }
 
 void remove_blind() {
   blind_state = 0;
-  // TODO 블라인드 걷다
+  // TODO 
+  GPIO_SetBits(GPIOD, GPIO_Pin_13);
+  
+  GPIO_ResetBits(GPIOD, GPIO_Pin_13);
+  
 }
 
 void control_blind() {
-  if ( auto_mode ) {
-    auto_mode = !auto_mode;
-  }
-  if ( blind_state == 0 ) {
-    blind_state = 1;
-    activate_blind();
-  }
-  else {
-    blind_state = 0;
-    remove_blind();
+  if ( auto_mode == 0) {
+    if( blind_state == 1){
+      remove_blind();
+    }else{
+      activate_blind();
+    }
   }
 }
 
@@ -363,37 +463,64 @@ void off_LED() {
 }
 
 void control_LED() {
-  if ( auto_mode ) {
-    auto_mode = !auto_mode;
+  if ( auto_mode == 0) {
+    if( led_state == 1){
+      off_LED();
+    }else{
+      on_LED();
+    }
   }
-  led_state = !led_state;
-  if ( led_state == 0 ) {
-    on_LED();
-  }
-  else {
-    off_LED();
+}
+
+void control_mode() {
+  
+}
+
+void check_activity_time() {
+  if ( auto_mode == 1 /* && activity time*/ ) {
+    
   }
 }
 
 void process_touch(uint16_t x, uint16_t y) {
 
   // BLIND sense
-  if ( H_I * 0 <= x && x <= H_I * 1 && V_I * 4 - TOUCH_WIDTH <= y && y <= V_I * 4 + TOUCH_WIDTH ) {
+  if ( ( 116<= x && x <=252 ) && ( V_I * 4<= y && y < V_I * 5) ) {
     control_blind();
   }
 
   // LED sense
-  if ( H_I * 1 <= x && x <= H_I * 2 && V_I * 4- TOUCH_WIDTH <= y && y <= V_I * 4 + TOUCH_WIDTH ) {
+  if ( ( 116<= x && x <=252 ) && ( V_I * 5<= y && y < V_I * 6) ) {
     control_LED();
   }
 
   // MODE sense
-  if ( H_I * 0 <= x && x <= H_I * 1 && V_I * 2 - TOUCH_WIDTH <= y && y <= V_I * 2 + TOUCH_WIDTH ) {
-    auto_mode = !auto_mode;
+  if ( ( 116<= x && x <=252 ) && (V_I * 3 <= y && y < V_I * 4) ) {
+    if(auto_mode == 0){
+      auto_mode = 1;
+    }else{
+      auto_mode = 0;
+    }
   }
-
 }
 
+void showLCD(void){
+  LCD_ShowString(H_S, V_I * 2 + V_S, MSG_LUMIN, color[11], color[0]);
+  LCD_ShowString(H_S, V_I * 3 + V_S , MSG_MODE, color[11], color[0]);
+  LCD_ShowString(H_S, V_I * 4 + V_S, MSG_BLIND, color[11], color[0]);
+  LCD_ShowString(H_S, V_I * 5 + V_S, MSG_LED, color[11], color[0]);
+  LCD_ShowString(H_S, V_I * 2 + V_S, MSG_LUMIN, color[11], color[0]);
+  LCD_ShowString(60, 10, MSG_TITLE, color[11], color[0]);
+  LCD_ShowString(H_S, V_I + V_S, MSG_TIME, color[11], color[0]);
+
+  LCD_DrawLine(0, V_I * 1, H_END , V_I * 1);
+  LCD_DrawLine(0, V_I * 2, H_END , V_I * 2);
+  LCD_DrawLine(0, V_I * 3, H_END , V_I * 3);
+  LCD_DrawLine(0, V_I * 4, H_END , V_I * 4);
+  LCD_DrawLine(0, V_I * 5, H_END , V_I * 5);
+  LCD_DrawLine(0, V_I * 6, H_END , V_I * 6);
+  LCD_DrawLine(116, V_I, 116 , V_I * 6);
+}
 
 int main(void)
 {
@@ -405,42 +532,27 @@ int main(void)
     USART1_Configure();
     USART2_Configure();
     TIM_Configure();
-
     LCD_Init();
     Touch_Configuration();
-    //Touch_Adjust();
+    Touch_Adjust();
     LCD_Clear(WHITE);
     
-      LCD_ShowString(0, 0, MSG_TIME, color[11], color[0]);
+    showLCD();
 
-  /*
-    char msg[] = "WED_Team08";
-    LCD_ShowString(0, 0, msg, color[11], color[0] );
-*/
     uint16_t x, y;
-   
-    while (1) {
-//      GPIO_SetBits(GPIOD, GPIO_Pin_11);
-//      GPIOD->BSRR |= GPIO_Pin_11;
-//      GPIO_SetBits(GPIOD, GPIO_Pin_12);
-//      GPIO_SetBits(GPIOD, GPIO_Pin_13);
-//      GPIO_ResetBits(GPIOD, GPIO_Pin_13);
+    
+   while (1) {
 
       Touch_GetXY(&x, &y, 1);
       Convert_Pos(x, y, &x, &y);
       process_touch(x, y);
       
-      /*
-      LCD_ShowNum(0, 32, value, 10,color[11], color[0]);
-      LCD_DrawCircle(x, y, 6);
-*/
+      LCD_indicate(time, 1200, blind_state, led_state, auto_mode);
       
-      LCD_indicate(time, 1200, auto_mode, blind_state, led_state);
-      LCD_ShowNum(0, V_I * 5, x, 10,color[11], color[0]);
-      LCD_ShowNum(0, V_I * 6, y, 10,color[11], color[0]);
+//      LCD_ShowNum(0, V_I * 5, x, 10,color[11], color[0]);
+//      LCD_ShowNum(0, V_I * 6, y, 10,color[11], color[0]);
       
 
     }
-       
     return 0;
 }
