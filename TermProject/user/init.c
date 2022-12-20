@@ -53,9 +53,15 @@ void GPIO_Configure(void) // stm32f10x_gpio.h ????
   
   // to activate motor
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_InitStructure.GPIO_Pin = (GPIO_Pin_11 | GPIO_Pin_12 | GPIO_Pin_13);
+  GPIO_InitStructure.GPIO_Pin = (GPIO_Pin_11 | GPIO_Pin_12 );
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
   GPIO_Init(GPIOD, &GPIO_InitStructure);
+  
+  GPIO_InitTypeDef GPIO_InitStructure1;
+  GPIO_InitStructure1.GPIO_Mode = GPIO_Mode_Out_PP;
+  GPIO_InitStructure1.GPIO_Pin = (GPIO_Pin_13);
+  GPIO_InitStructure1.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(GPIOD, &GPIO_InitStructure1);
 }
 
 void ADC_Configure() {
@@ -88,22 +94,21 @@ void NVIC_Configure(void) { // misc.h
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 
   NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
   NVIC_Init(&NVIC_InitStructure);
 
   NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
   NVIC_InitStructure.NVIC_IRQChannelSubPriority = 2;
   NVIC_Init(&NVIC_InitStructure);
 
 
-  //From LCD
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_0);
   NVIC_EnableIRQ(ADC1_2_IRQn);
   NVIC_InitStructure.NVIC_IRQChannel = ADC1_2_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0; // TODO
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; // TODO
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1; // TODO
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1; // TODO
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
   
@@ -176,3 +181,5 @@ void USART2_Configure() {
   USART_Cmd(USART2, ENABLE);
   USART_ITConfig(USART2, USART_IT_RXNE , ENABLE);
 }
+
+
