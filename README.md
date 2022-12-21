@@ -1,4 +1,4 @@
-Embedded_System_TermProject
+Smart-Blind-stm32
 ==========
 ## 1. 제목 : Smart Blind
 ---
